@@ -117,7 +117,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
 
         .question-number {
@@ -142,7 +142,7 @@
             background-color: var(--gray);
             border-radius: 5px;
             overflow: hidden;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
         }
 
         .progress-bar {
@@ -254,4 +254,385 @@
 
         .ranking-screen h2 {
             color: var(--dark);
-            font-size: 24px
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .ranking-list {
+            list-style: none;
+            margin-bottom: 25px;
+            max-height: 280px;
+            overflow-y: auto;
+        }
+
+        .ranking-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: var(--light);
+            border-radius: 12px;
+            margin-bottom: 8px;
+            border: 1px solid var(--gray);
+        }
+
+        .ranking-item.top-1 {
+            background: #fff9e6;
+            border-color: #ffe066;
+            font-weight: bold;
+        }
+
+        .ranking-item.current-user {
+            border: 2px solid var(--primary);
+            background: #e8f8f5;
+        }
+
+        .rank-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .rank-pos {
+            font-weight: bold;
+            font-size: 16px;
+            width: 25px;
+            color: var(--dark);
+        }
+
+        .rank-name {
+            font-size: 15px;
+            color: var(--dark);
+        }
+
+        .rank-pts {
+            font-weight: bold;
+            color: var(--primary);
+            font-size: 15px;
+        }
+
+        .clear-btn {
+            background: transparent;
+            color: var(--danger);
+            border: none;
+            font-size: 12px;
+            cursor: pointer;
+            text-decoration: underline;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <!-- 1. TELA INICIAL -->
+    <div id="start-screen" class="screen active">
+        <div class="start-screen">
+            <h1>♻️ Desafio Pegada de Plástico</h1>
+            <p>Responda a 10 perguntas do cotidiano, descubra o impacto das suas escolhas e veja sua posição no Ranking!</p>
+            
+            <div class="form-group">
+                <label for="username">Digite seu Nome ou Apelido:</label>
+                <input type="text" id="username" placeholder="Ex: Maria_Eco" maxlength="15" autocomplete="off">
+            </div>
+
+            <button class="btn" onclick="initQuiz()">Iniciar Desafio 🚀</button>
+            <button class="btn btn-secondary" onclick="showRankingOnly()">Ver Ranking 🏆</button>
+        </div>
+    </div>
+
+    <!-- 2. TELA DO QUIZ -->
+    <div id="quiz-screen" class="screen">
+        <div class="quiz-header">
+            <span id="q-number" class="question-number">Pergunta 1 de 10</span>
+            <span id="user-display" class="user-tag">@Jogador</span>
+        </div>
+
+        <div class="progress-bar-container">
+            <div id="progress-bar" class="progress-bar"></div>
+        </div>
+
+        <h2 id="q-text" class="question-title">Pergunta...</h2>
+
+        <div id="options-container" class="options-list"></div>
+
+        <div id="feedback-card" class="feedback-card">
+            <div id="feedback-pts" class="feedback-pts">+0 Pontos!</div>
+            <p id="feedback-msg" class="feedback-msg">A explicação aparecerá aqui.</p>
+            <button class="btn" onclick="nextQuestion()">Próxima Pergunta ➡️</button>
+        </div>
+    </div>
+
+    <!-- 3. TELA DE RESULTADO -->
+    <div id="result-screen" class="screen result-screen">
+        <div class="score-badge">
+            <div id="final-score">0</div>
+            <span>Pontos</span>
+        </div>
+        <h2 id="badge-title" class="badge-title">Analisando...</h2>
+        <p id="result-desc" class="desc-text">Seu perfil ambiental surgirá aqui...</p>
+
+        <button class="btn" onclick="saveAndShowRanking()">Ver Meu Lugar no Ranking 🏆</button>
+    </div>
+
+    <!-- 4. TELA DE RANKING -->
+    <div id="ranking-screen" class="screen ranking-screen">
+        <h2>🏆 Ranking dos Jogadores</h2>
+        <p style="text-align: center; color: var(--text-gray); font-size: 13px; margin-bottom: 15px;">
+            Quanto MENOS pontos, MELHOR! (Escolha ecológica = 1 ponto)
+        </p>
+
+        <ul id="ranking-list" class="ranking-list"></ul>
+
+        <button class="btn" onclick="restartAll()">Jogar Novamente 🔄</button>
+        <div style="text-align: center;">
+            <button class="clear-btn" onclick="resetRanking()">Limpar dados do ranking local</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    var questions = [
+        {
+            q: "1. Como você costuma comprar hortifrúti no supermercado?",
+            opts: [
+                { txt: "Uso sacolas plásticas transparentes para pescar cada item.", pts: 3, fb: "Sacolinhas de hortifrúti são de uso único e raramente são recicladas." },
+                { txt: "Às vezes levo ecobag, mas coloco vegetais em sacos plásticos.", pts: 2, fb: "Um bom começo! Dá para eliminar os saquinhos internos pesando os vegetais soltos." },
+                { txt: "Levo ecobags e peso os vegetais soltos ou em saquinhos de pano.", pts: 1, fb: "Excelente! Você evita o plástico de uso único antes de ser gerado." }
+            ]
+        },
+        {
+            q: "2. Qual é o seu hábito para beber água, café ou chá fora de casa?",
+            opts: [
+                { txt: "Compro garrafas PET descartáveis e uso copos de plástico na firma/faculdade.", pts: 3, fb: "Garrafas PET e copos descartáveis são os maiores vilões do descarte diário." },
+                { txt: "Tenho garrafa em casa, mas com frequência esqueço e acabo comprando PET.", pts: 2, fb: "Quase lá! Criar o hábito de checar a garrafa antes de sair reduzirá muito seu descarte." },
+                { txt: "Carrego minha garrafa inox/copo reutilizável para todo canto.", pts: 1, fb: "Perfeito! Você evita descartar centenas de garrafas/copos por ano." }
+            ]
+        },
+        {
+            q: "3. Ao pedir delivery (iFood/Rappi), o que você faz sobre talheres e itens descartáveis?",
+            opts: [
+                { txt: "Esqueço de recusar; vem talheres, canudos, sachês e marmitas de isopor.", pts: 3, fb: "O delivery acumula muito plástico descartável desnecessário." },
+                { txt: "Peço para não enviarem talheres, mas não reparo na embalagem do restaurante.", pts: 2, fb: "Muito bem! Recusar os talheres plásticos já é uma grande vitória." },
+                { txt: "Recuso talheres/canudos e dou preferência a locais com embalagem de papel.", pts: 1, fb: "Show! Além de recusar os itens, você incentiva restaurantes sustentáveis." }
+            ]
+        },
+        {
+            q: "4. Como é o consumo de itens de higiene e limpeza na sua residência?",
+            opts: [
+                { txt: "Compro frascos plásticos tradicionais de tamanho pequeno/médio.", pts: 3, fb: "Comprar frascos pequenos aumenta o volume de plástico rígido no lixo." },
+                { txt: "Compro embalagens formato 'refil' econômico de vez em quando.", pts: 2, fb: "O refil utiliza até 80% menos plástico que um frasco rígido novo." },
+                { txt: "Utilizo produtos em refil concentrado, cosméticos em barra ou a granel.", pts: 1, fb: "Incrível! Cosméticos sólidos e refis concentrados evitam frascos novos." }
+            ]
+        },
+        {
+            q: "5. Como é feita a destinação do plástico na sua casa?",
+            opts: [
+                { txt: "Misturo no lixo comum e raramente separo para reciclagem.", pts: 3, fb: "Plásticos no lixo comum levam centenas de anos para se decompor em aterros." },
+                { txt: "Separo para a Coleta Seletiva, mas sem lavar ou checar se é reciclável.", pts: 2, fb: "Bom hábito, mas resíduos engordurados podem contaminar o lote reciclável." },
+                { txt: "Lavo os resíduos, separo corretamente e busco recusar plásticos antes.", pts: 1, fb: "Exemplar! Higienizar o reciclável garante o aproveitamento nas cooperativas." }
+            ]
+        },
+        {
+            q: "6. Quando vai a festas ou eventos sociais, qual o seu consumo de descartáveis?",
+            opts: [
+                { txt: "Uso vários copos, pratos e talheres plásticos ao longo da festa.", pts: 3, fb: "Em poucas horas de evento, uma única pessoa descarta vários copos." },
+                { txt: "Tento usar um único copo descartável a noite inteira.", pts: 2, fb: "Usar só um copo reduz o desperdício, mas ainda gera resíduo." },
+                { txt: "Levo meu copo retrátil/eco ou priorizo locais com louça lavável.", pts: 1, fb: "Nota 10! Carregar um eco-copo evita lixo descartável de forma simples." }
+            ]
+        },
+        {
+            q: "7. O que você faz com suas buchas/esponjas de lavar louça?",
+            opts: [
+                { txt: "Uso buchas amarelas tradicionais de poliuretano e troco toda semana.", pts: 3, fb: "Buchas sintéticas não se reciclam e soltam microplásticos pelo ralo." },
+                { txt: "Uso a bucha sintética, mas estendo o uso o máximo possível.", pts: 2, fb: "Aumentar a vida útil reduz o consumo, mas a bucha ainda vira lixo." },
+                { txt: "Uso bucha vegetal biodegradável ou escovas de madeira/fibra.", pts: 1, fb: "Sensacional! A bucha vegetal é 100% compostável." }
+            ]
+        },
+        {
+            q: "8. Como você consome roupas e tecidos (fibras sintéticas como poliéster)?",
+            opts: [
+                { txt: "Compro fast-fashion frequentemente sem olhar a composição do tecido.", pts: 3, fb: "Tecidos como poliéster e nylon liberam microfibras plásticas nas lavagens." },
+                { txt: "Tenho algumas roupas de poliéster/nylon, mas lavo com frequência normal.", pts: 2, fb: "Lavar com menos frequência ajuda a estender a vida útil do tecido." },
+                { txt: "Priorizo algodão/fibras naturais, brechós e sacos que retêm microplásticos.", pts: 1, fb: "Perfeito! Fibras naturais protegem os oceanos dos microplásticos." }
+            ]
+        },
+        {
+            q: "9. O que faz ao comprar congelados ou industrializados (marmitas, salgadinhos)?",
+            opts: [
+                { txt: "Consumo diariamente congelados em bandejas pretas/plásticas.", pts: 3, fb: "Bandejas pretas são difíceis de identificar nos triadores de reciclagem." },
+                { txt: "Consumo de vez em quando por praticidade na correria da semana.", pts: 2, fb: "Equilíbrio consciente! O uso ocasional gera um impacto moderado." },
+                { txt: "Cozinho em casa e armazeno alimentos em potes de vidro ou silicone.", pts: 1, fb: "Excelente! Potes de vidro duram muito e são livres de resíduos plásticos." }
+            ]
+        },
+        {
+            q: "10. Qual a sua atitude sobre canudos, tampas de copo e acessórios plásticos?",
+            opts: [
+                { txt: "Uso sem pensar; acho prático para tomar bebidas geladas e cafés.", pts: 3, fb: "Acessórios pequenos (canudos e tampinhas) escapam da coleta e vão para o mar." },
+                { txt: "Evito canudos, mas ainda aceito tampas plásticas em copos de café.", pts: 2, fb: "Boa! Recusar o canudo é um ótimo passo rumo à redução." },
+                { txt: "Recuso ativamente canudos, tampas descartáveis e sachês plásticos.", pts: 1, fb: "Atitude nota 1000! Recusar o supérfluo é o pilar mais importante." }
+            ]
+        }
+    ];
+
+    var currentQIndex = 0;
+    var score = 0;
+    var currentUser = "Anônimo";
+    var selectedOptionPoints = 0;
+
+    function showScreen(screenId) {
+        var screens = document.querySelectorAll('.screen');
+        for (var i = 0; i < screens.length; i++) {
+            screens[i].classList.remove('active');
+        }
+        document.getElementById(screenId).classList.add('active');
+    }
+
+    function initQuiz() {
+        var nameInput = document.getElementById('username').value.trim();
+        if (!nameInput) {
+            alert('Por favor, digite seu nome ou apelido para continuar!');
+            return;
+        }
+        currentUser = nameInput;
+        document.getElementById('user-display').innerText = '@' + currentUser;
+        
+        currentQIndex = 0;
+        score = 0;
+        showQuestion();
+        showScreen('quiz-screen');
+    }
+
+    function showQuestion() {
+        var q = questions[currentQIndex];
+        document.getElementById('q-number').innerText = 'Pergunta ' + (currentQIndex + 1) + ' de ' + questions.length;
+        document.getElementById('q-text').innerText = q.q;
+
+        var pct = (currentQIndex / questions.length) * 100;
+        document.getElementById('progress-bar').style.width = pct + '%';
+
+        document.getElementById('feedback-card').style.display = 'none';
+
+        var container = document.getElementById('options-container');
+        container.innerHTML = '';
+
+        for (var i = 0; i < q.opts.length; i++) {
+            (function(index) {
+                var opt = q.opts[index];
+                var btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.innerText = opt.txt;
+                btn.onclick = function() {
+                    selectOption(index, opt.pts, opt.fb);
+                };
+                container.appendChild(btn);
+            })(i);
+        }
+    }
+
+    function selectOption(optIndex, pts, feedbackText) {
+        selectedOptionPoints = pts;
+
+        var btns = document.querySelectorAll('.option-btn');
+        for (var i = 0; i < btns.length; i++) {
+            btns[i].onclick = null;
+            if (i === optIndex) {
+                btns[i].classList.add('selected');
+            }
+        }
+
+        document.getElementById('feedback-pts').innerText = 'Sua escolha acumulou +' + pts + ' Ponto(s)!';
+        document.getElementById('feedback-msg').innerText = feedbackText;
+        document.getElementById('feedback-card').style.display = 'block';
+    }
+
+    function nextQuestion() {
+        score += selectedOptionPoints;
+        currentQIndex++;
+
+        if (currentQIndex < questions.length) {
+            showQuestion();
+        } else {
+            finishQuiz();
+        }
+    }
+
+    function finishQuiz() {
+        document.getElementById('final-score').innerText = score;
+
+        var badge = "";
+        var desc = "";
+
+        if (score >= 25) {
+            badge = "🔴 Impacto Plástico Alto";
+            desc = "Sua pegada estimada é alta (>100 kg/ano). O uso constante de descartáveis gera grande volume de resíduos. Trocas simples (como garrafa inox e ecobag) reduzem seu impacto drasticamente!";
+        } else if (score >= 17) {
+            badge = "🟡 Consumidor em Transição";
+            desc = "Sua pegada fica na média nacional (~50 a 70 kg/ano). Você já possui hábitos sustentáveis, mas o plástico descartável ainda escapa na correria diária. Foque em recusar sacos de mercado e talheres no delivery!";
+        } else {
+            badge = "🟢 Campeão da Mitigação!";
+            desc = "Incrível! Sua pegada estimada é baixíssima (<30 kg/ano). Suas escolhas diárias estão perfeitamente alinhadas com as metas globais da ONU de redução na fonte!";
+        }
+
+        document.getElementById('badge-title').innerText = badge;
+        document.getElementById('result-desc').innerText = desc;
+
+        showScreen('result-screen');
+    }
+
+    function saveAndShowRanking() {
+        var ranking = JSON.parse(localStorage.getItem('ecoRanking') || '[]');
+        ranking.push({ name: currentUser, score: score });
+        ranking.sort(function(a, b) { return a.score - b.score; });
+        ranking = ranking.slice(0, 10);
+
+        localStorage.setItem('ecoRanking', JSON.stringify(ranking));
+
+        renderRanking();
+        showScreen('ranking-screen');
+    }
+
+    function renderRanking() {
+        var ranking = JSON.parse(localStorage.getItem('ecoRanking') || '[]');
+        var list = document.getElementById('ranking-list');
+        list.innerHTML = '';
+
+        if (ranking.length === 0) {
+            list.innerHTML = '<li style="text-align:center; color: var(--text-gray); padding: 20px;">Nenhuma pontuação registrada ainda. Seja o primeiro!</li>';
+            return;
+        }
+
+        for (var i = 0; i < ranking.length; i++) {
+            var item = ranking[i];
+            var li = document.createElement('li');
+            var isCurrent = (item.name === currentUser && item.score === score) ? 'current-user' : '';
+            var isTop1 = (i === 0) ? 'top-1' : '';
+
+            li.className = 'ranking-item ' + isCurrent + ' ' + isTop1;
+            li.innerHTML = '<div class="rank-info"><span class="rank-pos">#' + (i + 1) + '</span><span class="rank-name">' + item.name + (i === 0 ? ' 🥇' : '') + '</span></div><span class="rank-pts">' + item.score + ' pts</span>';
+            list.appendChild(li);
+        }
+    }
+
+    function showRankingOnly() {
+        renderRanking();
+        showScreen('ranking-screen');
+    }
+
+    function resetRanking() {
+        if (confirm("Tem certeza que deseja apagar o histórico de pontuações salvas?")) {
+            localStorage.removeItem('ecoRanking');
+            renderRanking();
+        }
+    }
+
+    function restartAll() {
+        document.getElementById('username').value = '';
+        showScreen('start-screen');
+    }
+</script>
+</body>
+</html>
